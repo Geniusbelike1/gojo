@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05030f">
+<title>Бесконечная пустота</title>
+<style>
+:root{--bg:#05030f;--ink:#eef0ff;--blue:#4aa8ff;--red:#ff4a5e;--pur:#b06bff;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+main{position:relative;z-index:1;max-width:440px;margin:0 auto;padding:18px 16px 30px}
+h1{margin:6px 0 2px;font-size:clamp(26px,8vw,38px);letter-spacing:1px;text-shadow:0 0 18px var(--pur)}
+.sub{margin:0 0 18px;opacity:.75;font-size:14px}
+.frame{position:relative;width:min(62vw,250px);aspect-ratio:1;margin:0 auto 12px;border-radius:50%;padding:6px;background:conic-gradient(var(--blue),var(--pur),var(--red),var(--pur),var(--blue));animation:spin 6s linear infinite;box-shadow:0 0 40px rgba(176,107,255,.55)}
+.frame .in{width:100%;height:100%;border-radius:50%;overflow:hidden;background:#0b0820;display:grid;place-items:center;animation:spin 6s linear infinite reverse}
+.frame img{width:100%;height:100%;object-fit:cover;display:none}
+.frame .ph{font-size:13px;opacity:.7;padding:20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.up{display:inline-block;margin-bottom:16px;padding:8px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.25);font-size:13px;cursor:pointer;background:rgba(255,255,255,.06)}
+.up input{display:none}
+#arena{position:relative;height:110px}
+.orb{position:absolute;top:50%;width:48px;height:48px;border-radius:50%;transform:translate(-50%,-50%);transition:left .5s ease-in;animation:pl .6s ease-in-out infinite alternate}
+.orb.b{left:16%;background:radial-gradient(circle,#fff 0,#7cc4ff 35%,#1a4cff 75%);box-shadow:0 0 26px var(--blue)}
+.orb.r{left:84%;background:radial-gradient(circle,#fff 0,#ff9aa6 35%,#b3001b 75%);box-shadow:0 0 26px var(--red)}
+.orb.m{left:50%!important}
+@keyframes pl{to{transform:translate(-50%,-50%) scale(1.18)}}
+.blast{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px;border-radius:50%;background:radial-gradient(circle,#fff,#c77dff 40%,#5a00c8);animation:bl .9s ease-out forwards}
+@keyframes bl{to{transform:scale(16);opacity:0}}
+.btns{display:flex;gap:8px;margin-top:6px}
+.btn{flex:1;padding:13px 4px;border:0;border-radius:14px;font:600 15px system-ui,sans-serif;color:#fff;cursor:pointer}
+.btn:active{transform:scale(.96)}
+.bb{background:linear-gradient(135deg,#1a4cff,#4aa8ff)}
+.br{background:linear-gradient(135deg,#b3001b,#ff4a5e)}
+.dom{width:100%;margin-top:10px;background:linear-gradient(135deg,#2a0a5e,#7a2cff);box-shadow:0 0 22px rgba(122,44,255,.5)}
+.cnt{margin-top:16px;font-size:15px;opacity:.9}
+.msg{min-height:22px;margin-top:6px;color:var(--pur);font-size:15px}
+.flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:20}
+.flash.go{animation:fl .5s ease-out}
+@keyframes fl{0%{opacity:.9}100%{opacity:0}}
+.shake{animation:sh .45s}
+@keyframes sh{0%,100%{transform:none}20%{transform:translate(-8px,4px)}40%{transform:translate(8px,-5px)}60%{transform:translate(-6px,-3px)}80%{transform:translate(5px,5px)}}
+body.void h1{text-shadow:0 0 30px #fff}
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+<div class="flash" id="flash"></div>
+<main id="m">
+  <h1>Бесконечная пустота</h1>
+  <p class="sub">Синий + Красный = Фиолетовый</p>
+
+  <div class="frame"><div class="in">
+    <img id="photo" src="gojo.jpg" alt="Фото">
+    <div class="ph" id="ph">👁️ Положи gojo.jpg рядом с этим файлом или добавь фото кнопкой ниже</div>
+  </div></div>
+  <label class="up">📷 Добавить фото<input type="file" id="file" accept="image/*"></label>
+
+  <div id="arena"></div>
+  <div class="btns">
+    <button class="btn bb" id="bB">🔵 Синий</button>
+    <button class="btn br" id="bR">🔴 Красный</button>
+  </div>
+  <button class="btn dom" id="dom">🌌 Расширение территории</button>
+  <div class="cnt" id="cnt">Ударов: 0</div>
+  <div class="msg" id="msg"></div>
+</main>
+
+<script>
+(function(){
+  var cv=document.getElementById("sky"),g=cv.getContext("2d"),W,H,R,S=[],sp=.6,vd=false;
+  function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;R=Math.hypot(W,H)/2}
+  rs();addEventListener("resize",rs);
+  for(var i=0;i<150;i++)S.push({a:Math.random()*6.283,r:Math.random()*R});
+  function draw(){
+    g.fillStyle=vd?"rgba(5,3,15,.18)":"rgba(5,3,15,.7)";g.fillRect(0,0,W,H);
+    S.forEach(function(s){
+      var p=s.r;s.r+=sp*(1+s.r/160);
+      if(s.r>R){s.r=Math.random()*20;s.a=Math.random()*6.283;p=s.r}
+      var cx=W/2,cy=H/2,ca=Math.cos(s.a),sa=Math.sin(s.a);
+      g.strokeStyle=vd?"#fff":"rgba(190,200,255,.85)";g.lineWidth=1+s.r/260;
+      g.beginPath();g.moveTo(cx+p*ca,cy+p*sa);g.lineTo(cx+s.r*ca,cy+s.r*sa);g.stroke();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  var img=document.getElementById("photo"),ph=document.getElementById("ph");
+  img.onload=function(){img.style.display="block";ph.style.display="none"};
+  img.onerror=function(){img.style.display="none";ph.style.display="block"};
+  if(img.complete&&img.naturalWidth)img.onload();
+  document.getElementById("file").onchange=function(e){
+    var f=e.target.files[0];if(f)img.src=URL.createObjectURL(f);
+  };
+
+  var arena=document.getElementById("arena"),has={b:null,r:null},n=0,busy=false;
+  var cnt=document.getElementById("cnt"),msg=document.getElementById("msg");
+  var LINES=["Это было слишком просто.","Пустота дрогнула.","Даже небо моргнуло.","Сильнейший в деле!","Мощность — на максимум."];
+  function fire(t){
+    if(busy||has[t])return;
+    var o=document.createElement("div");o.className="orb "+t;arena.appendChild(o);has[t]=o;
+    if(has.b&&has.r){busy=true;setTimeout(merge,450)}
+  }
+  function merge(){
+    has.b.classList.add("m");has.r.classList.add("m");
+    setTimeout(function(){
+      has.b.remove();has.r.remove();has.b=has.r=null;
+      var bl=document.createElement("div");bl.className="blast";arena.appendChild(bl);
+      setTimeout(function(){bl.remove()},950);
+      var f=document.getElementById("flash");f.classList.remove("go");void f.offsetWidth;f.classList.add("go");
+      var m=document.getElementById("m");m.classList.remove("shake");void m.offsetWidth;m.classList.add("shake");
+      n++;cnt.textContent="Ударов: "+n;msg.textContent="🟣 "+LINES[Math.floor(Math.random()*LINES.length)];
+      busy=false;
+    },500);
+  }
+  document.getElementById("bB").onclick=function(){fire("b")};
+  document.getElementById("bR").onclick=function(){fire("r")};
+
+  var dom=document.getElementById("dom");
+  dom.onclick=function(){
+    vd=!vd;document.body.classList.toggle("void",vd);sp=vd?14:.6;
+    dom.textContent=vd?"✨ Вернуть реальность":"🌌 Расширение территории";
+    msg.textContent=vd?"Бесконечная пустота раскрыта…":"";
+    var f=document.getElementById("flash");f.classList.remove("go");void f.offsetWidth;f.classList.add("go");
+  };
+})();
+</script>
+</body>
+</html>
